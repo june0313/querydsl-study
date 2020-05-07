@@ -11,7 +11,6 @@ import study.querydsl.entity.Member;
 import study.querydsl.entity.Team;
 
 import javax.persistence.EntityManager;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +51,7 @@ public class QueryDslBasicTest {
         // find member1
         String queryString =
                 "select m from Member m " +
-                "where m.username = :username";
+                        "where m.username = :username";
 
         Member findMember = em.createQuery(queryString, Member.class)
                 .setParameter("username", "member1")
@@ -149,5 +148,32 @@ public class QueryDslBasicTest {
         assertThat(member5.getUsername()).isEqualTo("member5");
         assertThat(member6.getUsername()).isEqualTo("member6");
         assertThat(memberNull.getUsername()).isNull();
+    }
+
+    @Test
+    void paging() {
+        List<Member> result = jpaQueryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetch();
+
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void paging2() {
+        QueryResults<Member> result = jpaQueryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetchResults();
+
+        assertThat(result.getTotal()).isEqualTo(4);
+        assertThat(result.getLimit()).isEqualTo(2);
+        assertThat(result.getOffset()).isEqualTo(1);
+        assertThat(result.getResults()).hasSize(2);
     }
 }
