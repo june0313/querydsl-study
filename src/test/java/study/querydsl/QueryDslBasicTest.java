@@ -222,4 +222,69 @@ public class QueryDslBasicTest {
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
     }
+
+    @Test
+    void join() {
+        List<Member> result = jpaQueryFactory
+                .selectFrom(member)
+//                .join(member.team, team)
+                .join(team).on(member.team.id.eq(team.id))
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("member1", "member2");
+    }
+
+    /**
+     * 세타 조인 (연관관계가 없는 필드로 조인)
+     */
+    @Test
+    void thetaJoin() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Member> result = jpaQueryFactory.select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("teamA", "teamB");
+    }
+
+    /**
+     * 회원, 팀 조인
+     * 팀 이름이 teamA인 팀만 조인
+     * 회원은 모두 조회
+     * JPQL : select m, t from Member m left join m.team t on t.name = 'teamA'
+     */
+    @Test
+    void join_on_filtering() {
+        List<Tuple> result = jpaQueryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+//                .join(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    void join_on_no_relation() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Tuple> result = jpaQueryFactory.select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.username.eq(team.name))
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
 }
