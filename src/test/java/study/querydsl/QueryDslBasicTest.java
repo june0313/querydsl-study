@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -391,9 +392,74 @@ public class QueryDslBasicTest {
 
     /**
      * JPA, JPQL에서는 from절의 subQuery는 지원하지 않는다.
-     *
+     * <p>
      * 1. 서브쿼리를 join으로 변경한다. (가능한 경우)
      * 2. 애플리케이션에서 쿼리를 2번 분리하여 실행
      * 3. native sql 사용
      */
+
+    @Test
+    void basicWhen() {
+        List<String> result = jpaQueryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    void complexCase() {
+        List<String> result = jpaQueryFactory
+                .select(new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0 ~ 20")
+                        .when(member.age.between(21, 30)).then("21 ~ 30")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
