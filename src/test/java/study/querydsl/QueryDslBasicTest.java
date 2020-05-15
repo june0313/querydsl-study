@@ -4,7 +4,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -620,4 +619,52 @@ public class QueryDslBasicTest {
 //    private BooleanExpression allEq(String usernameCond, Integer ageCond) {
 //        return usernameEq(usernameCond).and(ageEq(ageCond));
 //    }
+
+
+    @Test
+    void bulkUpdate() {
+        /**
+         * bulk 연산은 영속성 컨텍스트(1차 캐시)를 거치지 않고 DB로 쿼리가 바로 나간다.
+         */
+
+        // member1
+        // member2
+        long count = jpaQueryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        assertThat(count).isEqualTo(2);
+
+        List<Member> result = jpaQueryFactory
+                .selectFrom(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    void bulkAdd() {
+        long count = jpaQueryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+        long count2 = jpaQueryFactory
+                .update(member)
+                .set(member.age, member.age.multiply(2))
+                .execute();
+    }
+
+    @Test
+    void bulkDelete() {
+        long execute = jpaQueryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }
