@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
@@ -75,10 +76,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     @Override
     public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable) {
         List<MemberTeamDto> content = queryContents(condition, pageable);
-        // 카운트 쿼리를 좀더 최적화 할 수 있는 경우 별도의 쿼리로 작성할 수 있다.
-        long total = queryCount(condition);
-
-        return new PageImpl<>(content, pageable, total);
+        return PageableExecutionUtils.getPage(content, pageable, () -> queryCount(condition));
     }
 
     private List<MemberTeamDto> queryContents(MemberSearchCondition condition, Pageable pageable) {
@@ -103,6 +101,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     private long queryCount(MemberSearchCondition condition) {
+        // 카운트 쿼리를 좀더 최적화 할 수 있는 경우 별도의 쿼리로 작성할 수 있다.
         return queryFactory
                 .select(member)
                 .from(member)
